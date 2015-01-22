@@ -75,46 +75,64 @@ grapplingHook = function(pendulum,anchor,gravity){
 	var Δy = anchor.y - pendulum.y;
 	var Δx = anchor.x - pendulum.x;
 	var r = Math.sqrt(Δy*Δy + Δx*Δx)
-	var Φrad = Math.atan2(Δy,Δx)
-	var θrad = Φrad
+	var Φ_rod_rad = Math.atan2(Δy,Δx)
+	var θ_rod_rad = Φ_rod_rad
 	var outerLimit = Math.PI //[radians]
 	var bPol = -1 //Base Polarity
 	var radLimit  = Math.PI/2
-	//Get θ from Φ and translate computer angle system to mathematical model
-		if (-radLimit > Φrad || Φrad >= radLimit) {
+	//Get θ_rod_ from Φ_rod_ and translate computer angle system to mathematical model
+		if (-radLimit > Φ_rod_rad || Φ_rod_rad >= radLimit) {
 			bPol = 1//basePolarity
-			if (Φrad < 0) {
+			if (Φ_rod_rad < 0) {
 				outerLimit = outerLimit *-1
 			}
-			θrad = outerLimit - Φrad
+			θ_rod_rad = outerLimit - Φ_rod_rad
 		}
 
-	var sinθ = Math.sin(θrad)
-	var cosθ = Math.cos(θrad)
+	var sinθ_rod = Math.sin(θ_rod_rad)
+	var cosθ_rod = Math.cos(θ_rod_rad)
 
-	//pendulum weight due to gravity projected on axis of pendulum-anchor axis
-		var Wr = gravity * Math.sin(θrad)
-	//Velocity Magnitude
-	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
-	var ρ = (v*v/r)	//Radial Acceleration used to compute Tension
+
+	//Pendulum Velocity Details
+		var vx = pendulum.vx
+		var vy = pendulum.vy
+		var v = Math.sqrt(vy*vy + vx*vx)
+		var vθ_rad = Math.atan2(vy,vx)
+		var vθ_deg = vθ_rad * 180 / Math.PI
 	
-	//Natural length of pendulum-anchor rod.
-		//Hard coded for now.
-		//In future set to desired rod length or
-		//Set to distance between pendulum and anchor when first connected.
-		var r0 = 200
-	
-	var k = 0.1	//Stiffness of rod
+	//Tensile Force components
+		//pendulum weight due to gravity projected on axis of pendulum-anchor axis
+			var Wr = gravity * Math.sin(θ_rod_rad)
+		//Radial Acceleration used to compute Tension
+			var ρ = (v*v/r)
+		//Rod Elasticity
+			//Stiffness of rod
+				var k = 0.0001
+			//Natural length of pendulum-anchor rod.
+				//Hard coded for now.
+				//In future set to desired rod length or
+				//Set to length between pendulum & anchor when 1st connected.
+				var r0 = 150.5
+			var E = (r-r0)*k	//Rod elasticity tension component
+	//Acceleration Calculation
+		var ax = (Wr - ρ - E) * cosθ_rod * bPol
+		var ay = (Wr - ρ - E) * sinθ_rod * -1
+	pendulum.θ = θ_rod_rad * 180 / Math.PI
+	//Apply Acceleration to & publish velocity properties
+		pendulum.vy = pendulum.vy+ay
+		pendulum.vx = pendulum.vx+ax
+		pendulum.v = v
+		pendulum.vθ = vθ_deg
 
-	var E = (r-r0)*k	//Cord elasticity tension component
-
-	var ax = (Wr - ρ - E) * cosθ * bPol
-	var ay = (Wr - ρ - E) * sinθ * -1
-
-	pendulum.vy = pendulum.vy+ay
-	pendulum.vx = pendulum.vx+ax
 	pendulum.r = r
-	//pendulum.Φdeg = Φrad * 180 / Math.PI
+
+	//Damping Component
+		//pendulum velocity component along rod axis
+			var Δvy = anchor.y - pendulum.y;
+			var Δvx = anchor.x - pendulum.x;
+			var r = Math.sqrt(Δy*Δy + Δx*Δx)
+			var Φ_rod_rad = Math.atan2(Δy,Δx)
+		var vr = v * Math.cos(-θ_rod_rad)
 }
 
 drawState = function(o){
@@ -133,11 +151,11 @@ reset = function () {
 	entities = []
 	mouse = {x:0, y:0, w:5, h: 5}
 	block = {x:0, y:0, w:10, h:10, vx:0, vy:0, length: 5}
-	person = { x:1, y:-200, w:5, h:5, vx:0, vy: 0}
+	person = { x:1, y:-200.5, w:5, h:5, vx:0, vy: 0}
 	drawable = [block,person,mouse]
 	gravityAffected = [person]
 	moveable = [person]
-	stateDrawable = [person]
+	//stateDrawable = [person]
 	mousetrackable = [mouse]
 	Φable = [mouse]
 }
