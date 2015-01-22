@@ -2,9 +2,9 @@ con = can.getContext('2d')
 
 screenSetup = function(){
 	E('Screen').each(function(screen){
-		screen.width = screen.width
-		screen.height = screen.height
-		con.translate(screen.width*screen.translateX,screen.height * screen.translateY)
+		screen.can.width = screen.width
+		screen.can.height = screen.height
+		screen.con.translate(screen.width*screen.translateX,screen.height * screen.translateY)
 	})
 }
 draw = function(o){
@@ -15,13 +15,18 @@ draw = function(o){
 	})
 }
 gravity = function(o){
-	var g = 0.005;
-	var gMax = 4;
-	o.vy = _.min([g+o.vy,gMax])
+	E('GravityAffected').each(function(g,e){
+		var v = E('Velocity',e)
+		var p = E('Location',e)
+		v.y = _.min([g.value+v.y,g.max])
+	})
 }
 move = function(o){
-	o.x += o.vx
-	o.y += o.vy
+	E('Velocity').each(function(v,e){
+		var o = E('Location',e)
+		o.x += v.x
+		o.y += v.y
+	})
 }
 face = function(a,b){
 	return Math.atan2(b.y - a.y, b.x - a.x);
@@ -158,7 +163,9 @@ reset = function () {
 			width: can.width,
 			height: can.height,
 			translateX: 0.5,
-			translateY: 0.5
+			translateY: 0.5,
+			can: can,
+			con: con
 		}
 	})
 	var mouse = E({
@@ -228,18 +235,17 @@ window.onkeydown = function(e){
 engine = function(){
 
 	
-	
-	grapplingHook(person,block,0.005)
-	gravityAffected.map(gravity)
+	//grapplingHook(person,block,0.005)
+	gravity()
 	mouseUpdate()
-	moveable.map(move)
-	Φable.map(function(o){
-		Φ(o,block)
-	})
+	move()
+	//Φable.map(function(o){
+	//	Φ(o,block)
+	//})
 }
 
 loop = function(){
-	E('Paused').sample().value && engine()
+	!E('Paused').sample().value && engine()
 	screenSetup()
 	draw()
 	drawState()
