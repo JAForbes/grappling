@@ -8,7 +8,7 @@ draw = function(o){
 	con.fillRect(o.x-o.w/2,o.y-o.h/2,o.w,o.h)
 }
 gravity = function(o){
-	var g = 0//.005;
+	var g = 0.005;
 	var gMax = 4;
 	o.vy = _.min([g+o.vy,gMax])
 }
@@ -65,8 +65,8 @@ distance = function(a,b){
 	me.h0 = me.r * me.sinθ *-1
 	me.bTest = Math.round(me.x) == Math.round(me.b0)
 	me.hTest = Math.round(me.y) == Math.round(me.h0)
-	var g = 0.05
-	me.wn = 0.05 * Math.sin(me.θrad)
+	var g = 0.005
+	me.wn = gravity * Math.sin(me.θrad)
 	var v = Math.sqrt(me.vy*me.vy + me.vx*me.vx)
 }
 
@@ -93,7 +93,7 @@ grapplingHook = function(pendulum,anchor,gravity){
 	var cosθ = Math.cos(θrad)
 
 	//pendulum weight due to gravity projected on axis of pendulum-anchor axis
-		var Wr = 0.05 * Math.sin(θrad)
+		var Wr = gravity * Math.sin(θrad)
 	//Velocity Magnitude
 	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
 	var ρ = (v*v/r)	//Radial Acceleration used to compute Tension
@@ -109,7 +109,7 @@ grapplingHook = function(pendulum,anchor,gravity){
 	var E = (r-r0)*k	//Cord elasticity tension component
 
 	var ax = (Wr - ρ - E) * cosθ * bPol
-	var ay = (Wr - ρ - E) * sinθ * -1 + g
+	var ay = (Wr - ρ - E) * sinθ * -1
 
 	pendulum.vy = pendulum.vy+ay
 	pendulum.vx = pendulum.vx+ax
@@ -137,7 +137,7 @@ reset = function () {
 	drawable = [block,person,mouse]
 	gravityAffected = [person]
 	moveable = [person]
-	stateDrawable = [person,mouse]
+	stateDrawable = [person]
 	mousetrackable = [mouse]
 	Φable = [mouse]
 }
@@ -175,7 +175,7 @@ engine = function(){
 
 	
 	
-	grapplingHook(person,block,0.05)
+	grapplingHook(person,block,0.005)
 	gravityAffected.map(gravity)
 	mousetrackable.map(mouseUpdate)
 	moveable.map(move)
