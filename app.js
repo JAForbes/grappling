@@ -8,7 +8,7 @@ draw = function(o){
 	con.fillRect(o.x-o.w/2,o.y-o.h/2,o.w,o.h)
 }
 gravity = function(o){
-	var g = 0//.05;
+	var g = 0//.005;
 	var gMax = 4;
 	o.vy = _.min([g+o.vy,gMax])
 }
@@ -37,8 +37,8 @@ distance = function(a,b){
 Φ = function(me,you){
 	var Δy = you.y - me.y;
 	var Δx = you.x - me.x;
+	me.r = Math.sqrt(Δy*Δy + Δx*Δx)
 	//me.Φ = Math.atan2(Δy,Δx)
-
 	me.Φrad = Math.atan2(Δy,Δx)
 	me.Φdeg = me.Φrad * 180 / Math.PI
 	var outerLimit = Math.PI //[radians]
@@ -58,44 +58,62 @@ distance = function(a,b){
 
 	me.sinθ = Math.sin(me.θrad)
 	me.cosθ = Math.cos(me.θrad)
-	var Δy = you.y - me.y;
-	var Δx = you.x - me.x;
-	me.r = Math.sqrt(Δy*Δy + Δx*Δx)
+
+
 	me.bPol = bPol
 	me.b0 = me.r * me.cosθ * me.bPol
 	me.h0 = me.r * me.sinθ *-1
 	me.bTest = Math.round(me.x) == Math.round(me.b0)
 	me.hTest = Math.round(me.y) == Math.round(me.h0)
-
+	var g = 0.05
+	me.wn = 0.05 * Math.sin(me.θrad)
+	var v = Math.sqrt(me.vy*me.vy + me.vx*me.vx)
+	me.β = (v*v/me.r)
+	/*
+	*/
 }
 
 grapplingHook = function(pendulum,anchor){
 	var g = 0.05;
+
+
 	var Δy = anchor.y - pendulum.y;
 	var Δx = anchor.x - pendulum.x;
-	var Φ = Math.atan2(Δy,Δx)
-	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
-	var r = Math.sqrt(Δy*Δy + Δx*Δx)
-	//var θ = Math.PI/2 - Φ + Math.PI/2
-	//var θ = Math.PI*0.5 - Φ
-	var β0 = (v*v/r) 
-	var β = g*Math.sin(Φ) - β0//(v*v/r) //+ g*Math.cos(θ)
-	var ax = β*Math.cos(Φ)
-	var ay0 = β*Math.sin(Φ)
-	var ay = ay0 + g
-	//pendulum.θ = θ
-	pendulum.Φ = Φ*(180/Math.PI)
-	pendulum.β = β
-	pendulum.β0 = β0
-	pendulum.sΦ = Math.sin(Φ)
-	pendulum.cΦ = Math.cos(Φ)
-	pendulum.g = g*Math.sin(Φ)
-	//console.log("v:", v, "r:",r, "β:", β, "θ:",θ*(180/Math.PI))
-	/*
-	*/
+	pendulum.r = Math.sqrt(Δy*Δy + Δx*Δx)
+	
+	pendulum.Φrad = Math.atan2(Δy,Δx)
+	pendulum.Φdeg = pendulum.Φrad * 180 / Math.PI
+	var outerLimit = Math.PI //[radians]
+	var bPol = 1 //Base Polarity
+	if (-Math.PI/2 <= pendulum.Φrad && pendulum.Φrad < Math.PI/2) {
+		pendulum.θrad = pendulum.Φrad
+		bPol	= -1//basePolarity
+	}else{
+		if (pendulum.Φrad < 0) {
+			outerLimit = outerLimit *-1
+		}
+		pendulum.θrad = outerLimit - pendulum.Φrad
+		
+	};
+	pendulum.θdeg = pendulum.Φrad * 180 / Math.PI
 
-	console.log("Φ:",Φ*(180/Math.PI))
-	//pendulum.vy = pendulum.vy+ay
+	pendulum.sinθ = Math.sin(pendulum.θrad)
+	pendulum.cosθ = Math.cos(pendulum.θrad)
+	
+	pendulum.bPol = bPol
+	pendulum.b0 = pendulum.r * pendulum.cosθ * pendulum.bPol
+	pendulum.h0 = pendulum.r * pendulum.sinθ *-1
+	pendulum.bTest = Math.round(pendulum.x) == Math.round(pendulum.b0)
+	pendulum.hTest = Math.round(pendulum.y) == Math.round(pendulum.h0)
+	var g = 0.05
+	pendulum.wn = 0.05 * Math.sin(pendulum.θrad)
+	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
+	pendulum.β = (v*v/pendulum.r)
+
+	var ax = 0.001
+	var ay = 0
+
+	pendulum.vy = pendulum.vy+ay
 	pendulum.vx = pendulum.vx+ax
 }
 
@@ -115,13 +133,11 @@ reset = function () {
 	entities = []
 	mouse = {x:0, y:0, w:5, h: 5}
 	block = {x:0, y:0, w:10, h:10, vx:0, vy:0, length: 5}
-	person = { x:-50, y:50, w:10, h:10, vx:0, vy: 0}
-	drawable = [block,mouse]
-	//drawable = [block,person,mouse]
+	person = { x:-50, y:50, w:5, h:5, vx:0, vy: 0}
+	drawable = [block,person,mouse]
 	gravityAffected = [person]
 	moveable = [person]
-	stateDrawable = [mouse]
-	//stateDrawable = [person,mouse]
+	stateDrawable = [person,mouse]
 	mousetrackable = [mouse]
 	Φable = [mouse]
 }
@@ -159,7 +175,7 @@ engine = function(){
 
 	
 	
-	//grapplingHook(person,block)
+	grapplingHook(person,block)
 	gravityAffected.map(gravity)
 	mousetrackable.map(mouseUpdate)
 	moveable.map(move)
