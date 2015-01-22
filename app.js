@@ -1,8 +1,11 @@
 con = can.getContext('2d')
 
 screenSetup = function(){
-	can.width = can.width
-	con.translate(can.width/2,+can.height/2)
+	E('Screen').each(function(screen){
+		screen.width = screen.width
+		screen.height = screen.height
+		con.translate(screen.width*screen.translateX,screen.height * screen.translateY)
+	})
 }
 draw = function(o){
 	E('Drawable').each(function(drawable,e){
@@ -151,6 +154,12 @@ reset = function () {
 	E.components = {}
 	var game = E({
 		Paused: { value: false },
+		Screen: {
+			width: can.width,
+			height: can.height,
+			translateX: 0.5,
+			translateY: 0.5
+		}
 	})
 	var mouse = E({
 		Location: { x:0, y:0 },
