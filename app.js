@@ -82,52 +82,85 @@ distance = function(a,b){
 	var v = Math.sqrt(me.vy*me.vy + me.vx*me.vx)
 }
 
-grapplingHook = function(pendulum,anchor,gravity){
-	var g = gravity;
-	var Δy = anchor.y - pendulum.y;
-	var Δx = anchor.x - pendulum.x;
-	var r = Math.sqrt(Δy*Δy + Δx*Δx)
-	var Φrad = Math.atan2(Δy,Δx)
-	var θrad = Φrad
-	var outerLimit = Math.PI //[radians]
-	var bPol = -1 //Base Polarity
-	var radLimit  = Math.PI/2
-	//Get θ from Φ and translate computer angle system to mathematical model
-		if (-radLimit > Φrad || Φrad >= radLimit) {
+grapplingHook = function(){
+	E('GrapplingHookConnection').each(function(connection,e){
+		
+		
+		var g = E('GravityAffected',e).value
+		var anchor = E('Location',connection.anchor)
+		var pendulum = E('Location',e)
+		
+		var Δy = anchor.y - pendulum.y;
+		var Δx = anchor.x - pendulum.x;
+		var r = Math.sqrt(Δy*Δy + Δx*Δx)
+		var Φ_rod_rad = Math.atan2(Δy,Δx)
+		var θ_rod_rad = Φ_rod_rad
+		var outerLimit = Math.PI //[radians]
+		var bPol = -1 //Base Polarity
+		var radLimit  = Math.PI/2
+		//Get θ_rod_ from Φ_rod_ and translate computer angle system to mathematical model
+		if (-radLimit > Φ_rod_rad || Φ_rod_rad >= radLimit) {
 			bPol = 1//basePolarity
-			if (Φrad < 0) {
+			if (Φ_rod_rad < 0) {
 				outerLimit = outerLimit *-1
 			}
-			θrad = outerLimit - Φrad
+			θ_rod_rad = outerLimit - Φ_rod_rad
 		}
-
-	var sinθ = Math.sin(θrad)
-	var cosθ = Math.cos(θrad)
-
-	//pendulum weight due to gravity projected on axis of pendulum-anchor axis
-		var Wr = gravity * Math.sin(θrad)
-	//Velocity Magnitude
-	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
-	var ρ = (v*v/r)	//Radial Acceleration used to compute Tension
-	
-	//Natural length of pendulum-anchor cord.
+		
+		var sinθ_rod = Math.sin(θ_rod_rad)
+		var cosθ_rod = Math.cos(θ_rod_rad)
+		
+		var velocity = E('Velocity',e)
+		//Pendulum Velocity Details
+		var vx = velocity.x
+		var vy = velocity.y
+		var v = Math.sqrt(vy*vy + vx*vx)
+		var vθ_rad = Math.atan2(vy,vx)
+		var vθ_deg = vθ_rad * 180 / Math.PI
+		
+		//Tensile Force components
+		//velocity weight due to gravity projected on axis of velocity-anchor axis
+		var Wr = g * Math.sin(θ_rod_rad)
+		
+		//Radial Acceleration used to compute Tension
+		var ρ = (v*v/r)
+		
+		//Rod Elasticity
+		//Stiffness of rod
+		var k = 0.0001
+		
+		//Natural length of velocity-anchor rod.
 		//Hard coded for now.
-		//In future set to desired cord length or
-		//Set to distance between pendulum and anchor when first connected.
-		var r0 = 200
-	
-	var k = 0.005	//Stiffness of cord
-
-	var E = (r-r0)*k	//Cord elasticity tension component
-
-	var ax = (Wr - ρ - E) * cosθ * bPol
-	var ay = (Wr - ρ - E) * sinθ * -1
-
-	pendulum.vy = pendulum.vy+ay
-	pendulum.vx = pendulum.vx+ax
-	pendulum.r = r
-	//pendulum.Φdeg = Φrad * 180 / Math.PI
+		//In future set to desired rod length or
+		//Set to length between velocity & anchor when 1st connected.
+		var r0 = 150.5
+		
+		var elasticity = (r-r0)*k	//Rod elasticity tension component
+		
+		//Acceleration Calculation
+		var ax = (Wr - ρ - elasticity) * cosθ_rod * bPol
+		var ay = (Wr - ρ - elasticity) * sinθ_rod * -1
+		
+		velocity.θ = θ_rod_rad * 180 / Math.PI
+		//Apply Acceleration to & publish velocity properties
+		velocity.y = velocity.y+ay
+		velocity.x = velocity.x+ax
+		// pendulum.v = v
+		// pendulum.vθ = vθ_deg
+		
+		pendulum.r = r
+		
+		//Damping Component
+		//pendulum velocity component along rod axis
+		var Δvy = anchor.y - velocity.y;
+		var Δvx = anchor.x - velocity.x;
+		var r = Math.sqrt(Δy*Δy + Δx*Δx)
+		var Φ_rod_rad = Math.atan2(Δy,Δx)
+		var vr = v * Math.cos(-θ_rod_rad)
+		
+	})
 }
+
 
 drawState = function(o){
 	E('StateDrawable').each(function(drawable,e){
@@ -193,6 +226,10 @@ reset = function () {
 			summarise: 1,
 			include: ['Location','Velocity','Dimensions','GravityAffected']
 		},
+		GrapplingHookConnection : {
+			anchor: block,
+			initial_distance: 200
+		}
 	})
 	
 }
@@ -234,7 +271,7 @@ window.onkeydown = function(e){
 engine = function(){
 
 	
-	//grapplingHook(person,block,0.005)
+	grapplingHook()
 	gravity()
 	mouseUpdate()
 	move()
@@ -250,6 +287,6 @@ loop = function(){
 	drawState()
 }
 reset()
-//loop
+
 setInterval(loop,0)	//0 is instant, 1000 is to do it once a second
 
