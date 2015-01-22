@@ -103,18 +103,19 @@ grapplingHook = function(pendulum,anchor){
 	pendulum.bPol = bPol
 	pendulum.b0 = pendulum.r * pendulum.cosθ * pendulum.bPol
 	pendulum.h0 = pendulum.r * pendulum.sinθ *-1
-	pendulum.bTest = Math.round(pendulum.x) == Math.round(pendulum.b0)
-	pendulum.hTest = Math.round(pendulum.y) == Math.round(pendulum.h0)
+	//pendulum.bTest = Math.round(pendulum.x) == Math.round(pendulum.b0)
+	//pendulum.hTest = Math.round(pendulum.y) == Math.round(pendulum.h0)
 	var g = 0.05
 	pendulum.wn = 0.05 * Math.sin(pendulum.θrad)
 	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
 	pendulum.β = (v*v/pendulum.r)
 
-	var ax = 0.001
-	var ay = 0
+	pendulum.ax = (pendulum.wn - pendulum.β) * pendulum.cosθ * pendulum.bPol
+	//var ay = 0
+	pendulum.ay = (pendulum.wn - pendulum.β) * pendulum.sinθ * -1 + g
 
-	pendulum.vy = pendulum.vy+ay
-	pendulum.vx = pendulum.vx+ax
+	pendulum.vy = pendulum.vy+pendulum.ay
+	pendulum.vx = pendulum.vx+pendulum.ax
 }
 
 drawState = function(o){
@@ -189,9 +190,8 @@ loop = function(){
 	screenSetup()
 	drawable.map(draw)
 	stateDrawable.map(drawState)
-	requestAnimationFrame(loop)
 }
 reset()
 //loop
-setInterval(loop,100)	//0 is instant, 1000 is to do it once a second
+setInterval(loop,0)	//0 is instant, 1000 is to do it once a second
 
