@@ -108,11 +108,20 @@ grapplingHook = function(pendulum,anchor){
 	var g = 0.05
 	pendulum.wn = 0.05 * Math.sin(pendulum.θrad)
 	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
-	pendulum.β = (v*v/pendulum.r)
+	pendulum.β0 = (v*v/pendulum.r)
+	var r0 = 80
+	var k = 0.01	//Stiffness
 
-	pendulum.ax = (pendulum.wn - pendulum.β) * pendulum.cosθ * pendulum.bPol
+	pendulum.β1 = (pendulum.r-r0)*k
+	var c = 0//.1 //damping factor
+	pendulum.β2 = v*c
+
+
+
+
+	pendulum.ax = (pendulum.wn - pendulum.β0 - pendulum.β1 -pendulum.β2) * pendulum.cosθ * pendulum.bPol
 	//var ay = 0
-	pendulum.ay = (pendulum.wn - pendulum.β) * pendulum.sinθ * -1 + g
+	pendulum.ay = (pendulum.wn - pendulum.β0 - pendulum.β1 -pendulum.β2) * pendulum.sinθ * -1 + g
 
 	pendulum.vy = pendulum.vy+pendulum.ay
 	pendulum.vx = pendulum.vx+pendulum.ax
