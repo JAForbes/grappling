@@ -231,7 +231,6 @@ reset = function () {
 			initial_distance: 200
 		}
 	})
-	
 }
 
 
