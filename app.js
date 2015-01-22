@@ -192,7 +192,7 @@ reset = function () {
 		StateDrawable: {
 			summarise: 1,
 			include: ['Location','Velocity','Dimensions','GravityAffected']
-		}
+		},
 	})
 	
 }
@@ -206,7 +206,6 @@ togglePause = function(){
 }
 
 window.onkeydown = function(e){
-	console.log(e)
 	var action = ({
 		P: togglePause,
 		R: reset
@@ -223,7 +222,7 @@ window.onkeydown = function(e){
 	
 
 	mouseUpdate = function(o){
-		E('MouseTrackable', function(trackable,e){
+		E('MouseTrackable').each(function(trackable,e){
 			var o = E('Location',e)
 			o.x = _m.x;
 			o.y = _m.y;
