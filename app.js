@@ -98,13 +98,13 @@ grapplingHook = function(pendulum,anchor,gravity){
 	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
 	var ρ = (v*v/r)	//Radial Acceleration used to compute Tension
 	
-	//Natural length of pendulum-anchor cord.
+	//Natural length of pendulum-anchor rod.
 		//Hard coded for now.
-		//In future set to desired cord length or
+		//In future set to desired rod length or
 		//Set to distance between pendulum and anchor when first connected.
 		var r0 = 200
 	
-	var k = 0.005	//Stiffness of cord
+	var k = 0.1	//Stiffness of rod
 
 	var E = (r-r0)*k	//Cord elasticity tension component
 
