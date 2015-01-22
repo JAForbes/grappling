@@ -129,8 +129,10 @@ drawState = function(o){
 }
 
 reset = function () {
-	paused = false
-	entities = []
+	E.components = {}
+	var game = E({
+		Paused: { value: false },
+	})
 	mouse = {x:0, y:0, w:5, h: 5}
 	block = {x:0, y:0, w:10, h:10, vx:0, vy:0, length: 5}
 	person = { x:1, y:-200, w:5, h:5, vx:0, vy: 0}
@@ -145,7 +147,9 @@ reset = function () {
 
 
 togglePause = function(){
-	paused = !paused;
+	E('Paused').each(function(paused,e){
+		paused.value = !paused.value
+	})
 }
 
 window.onkeydown = function(e){
@@ -158,16 +162,16 @@ window.onkeydown = function(e){
 }
 
 ;(function(){
-  var _m = {x: 0, y: 0}
-  window.onclick = function(e){
-    _m.x = e.clientX - can.width/2
-    _m.y = (e.clientY) - can.height/2
-  }
+	var _m = {x: 0, y: 0}
+	window.onclick = function(e){
+		_m.x = e.clientX - can.width/2
+		_m.y = (e.clientY) - can.height/2
+	}
 
-  mouseUpdate = function(o){
-  	o.x = _m.x
-  	o.y = _m.y
-  }
+	mouseUpdate = function(o){
+		o.x = _m.x
+		o.y = _m.y
+	}
 }())
 
 
@@ -185,7 +189,7 @@ engine = function(){
 }
 
 loop = function(){
-	!paused && engine()
+	E('Paused').sample().value && engine()
 	screenSetup()
 	drawable.map(draw)
 	stateDrawable.map(drawState)
