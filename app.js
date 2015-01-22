@@ -5,7 +5,11 @@ screenSetup = function(){
 	con.translate(can.width/2,+can.height/2)
 }
 draw = function(o){
-	con.fillRect(o.x-o.w/2,o.y-o.h/2,o.w,o.h)
+	E('Drawable').each(function(drawable,e){
+		var o = E('Location',e)
+		var d = E('Dimensions',e)
+		con.fillRect(o.x-d.w/2,o.y-d.h/2,d.w,d.h)
+	})
 }
 gravity = function(o){
 	var g = 0.005;
@@ -118,14 +122,29 @@ grapplingHook = function(pendulum,anchor,gravity){
 }
 
 drawState = function(o){
-	var i = 0;
-	var spacing = 20;
-	con.font = '12pt Helvetica'
-	for(var key in o){
-		var val = o[key]
-		con.fillText([key,':',val].join(''),o.x+o.w, o.y + o.h + i * spacing)
-		i++
-	}
+	E('StateDrawable').each(function(drawable,e){
+		var i = 0;
+		var spacing = 15;
+		
+		
+		var o = E('Location',e)
+		var d = E('Dimensions',e)
+		
+		con.font = '10pt Helvetica'
+		for(var j = 0; j < drawable.include.length; j++ ){
+			var componentName = drawable.include[j];
+			var component = E(componentName,e)
+			
+			
+			for(key in component){
+				var val = component[key]
+				con.fillText([componentName.slice(0,drawable.summarise),'.',key,':',val].join(''),o.x+d.w, o.y + d.h + i * spacing)
+				i++
+			}
+			i++
+		}
+	
+	})
 }
 
 reset = function () {
@@ -133,15 +152,33 @@ reset = function () {
 	var game = E({
 		Paused: { value: false },
 	})
-	mouse = {x:0, y:0, w:5, h: 5}
-	block = {x:0, y:0, w:10, h:10, vx:0, vy:0, length: 5}
-	person = { x:1, y:-200, w:5, h:5, vx:0, vy: 0}
-	drawable = [block,person,mouse]
-	gravityAffected = [person]
-	moveable = [person]
-	stateDrawable = [person]
-	mousetrackable = [mouse]
-	Φable = [mouse]
+	var mouse = E({
+		Location: { x:0, y:0 },
+		Velocity: { x:0 ,y:0 },
+		Dimensions: {w:5, h: 5},
+		MouseTrackable: {},
+		Drawable: {},
+		ΦAble: {}
+	})
+	var block = E({
+		Location: { x:0, y:0 },
+		Velocity: { x:0, y:0 },
+		Dimensions: {w:10, h:10},
+		Length: { value: 5},
+		Drawable: {}
+	})
+	var person = E({
+		Location: { x:10, y:-200 },
+		Velocity: { x:0, y:0 },
+		Dimensions: {w:5, h:5},
+		Drawable: {},
+		GravityAffected: { value:	0.005, max: 4 },
+		StateDrawable: {
+			summarise: 1,
+			include: ['Location','Velocity','Dimensions','GravityAffected']
+		}
+	})
+	
 }
 
 
@@ -167,10 +204,14 @@ window.onkeydown = function(e){
 		_m.x = e.clientX - can.width/2
 		_m.y = (e.clientY) - can.height/2
 	}
+	
 
 	mouseUpdate = function(o){
-		o.x = _m.x
-		o.y = _m.y
+		E('MouseTrackable', function(trackable,e){
+			var o = E('Location',e)
+			o.x = _m.x;
+			o.y = _m.y;
+		})
 	}
 }())
 
@@ -181,7 +222,7 @@ engine = function(){
 	
 	grapplingHook(person,block,0.005)
 	gravityAffected.map(gravity)
-	mousetrackable.map(mouseUpdate)
+	mouseUpdate()
 	moveable.map(move)
 	Φable.map(function(o){
 		Φ(o,block)
@@ -191,8 +232,8 @@ engine = function(){
 loop = function(){
 	E('Paused').sample().value && engine()
 	screenSetup()
-	drawable.map(draw)
-	stateDrawable.map(drawState)
+	draw()
+	drawState()
 }
 reset()
 //loop
