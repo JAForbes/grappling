@@ -68,63 +68,53 @@ distance = function(a,b){
 	var g = 0.05
 	me.wn = 0.05 * Math.sin(me.θrad)
 	var v = Math.sqrt(me.vy*me.vy + me.vx*me.vx)
-	me.β = (v*v/me.r)
-	/*
-	*/
 }
 
-grapplingHook = function(pendulum,anchor){
-	var g = 0.05;
-
-
+grapplingHook = function(pendulum,anchor,gravity){
+	var g = gravity;
 	var Δy = anchor.y - pendulum.y;
 	var Δx = anchor.x - pendulum.x;
-	pendulum.r = Math.sqrt(Δy*Δy + Δx*Δx)
-	
-	pendulum.Φrad = Math.atan2(Δy,Δx)
-	pendulum.Φdeg = pendulum.Φrad * 180 / Math.PI
+	var r = Math.sqrt(Δy*Δy + Δx*Δx)
+	var Φrad = Math.atan2(Δy,Δx)
+	var θrad = Φrad
 	var outerLimit = Math.PI //[radians]
-	var bPol = 1 //Base Polarity
-	if (-Math.PI/2 <= pendulum.Φrad && pendulum.Φrad < Math.PI/2) {
-		pendulum.θrad = pendulum.Φrad
-		bPol	= -1//basePolarity
-	}else{
-		if (pendulum.Φrad < 0) {
-			outerLimit = outerLimit *-1
+	var bPol = -1 //Base Polarity
+	var radLimit  = Math.PI/2
+	//Get θ from Φ and translate computer angle system to mathematical model
+		if (-radLimit > Φrad || Φrad >= radLimit) {
+			bPol = 1//basePolarity
+			if (Φrad < 0) {
+				outerLimit = outerLimit *-1
+			}
+			θrad = outerLimit - Φrad
 		}
-		pendulum.θrad = outerLimit - pendulum.Φrad
-		
-	};
-	pendulum.θdeg = pendulum.Φrad * 180 / Math.PI
 
-	pendulum.sinθ = Math.sin(pendulum.θrad)
-	pendulum.cosθ = Math.cos(pendulum.θrad)
-	
-	pendulum.bPol = bPol
-	pendulum.b0 = pendulum.r * pendulum.cosθ * pendulum.bPol
-	pendulum.h0 = pendulum.r * pendulum.sinθ *-1
-	//pendulum.bTest = Math.round(pendulum.x) == Math.round(pendulum.b0)
-	//pendulum.hTest = Math.round(pendulum.y) == Math.round(pendulum.h0)
-	var g = 0.05
-	pendulum.wn = 0.05 * Math.sin(pendulum.θrad)
+	var sinθ = Math.sin(θrad)
+	var cosθ = Math.cos(θrad)
+
+	//pendulum weight due to gravity projected on axis of pendulum-anchor axis
+		var Wr = 0.05 * Math.sin(θrad)
+	//Velocity Magnitude
 	var v = Math.sqrt(pendulum.vy*pendulum.vy + pendulum.vx*pendulum.vx)
-	pendulum.β0 = (v*v/pendulum.r)
-	var r0 = 80
-	var k = 0.01	//Stiffness
+	var ρ = (v*v/r)	//Radial Acceleration used to compute Tension
+	
+	//Natural length of pendulum-anchor cord.
+		//Hard coded for now.
+		//In future set to desired cord length or
+		//Set to distance between pendulum and anchor when first connected.
+		var r0 = 200
+	
+	var k = 0.005	//Stiffness of cord
 
-	pendulum.β1 = (pendulum.r-r0)*k
-	var c = 0//.1 //damping factor
-	pendulum.β2 = v*c
+	var E = (r-r0)*k	//Cord elasticity tension component
 
+	var ax = (Wr - ρ - E) * cosθ * bPol
+	var ay = (Wr - ρ - E) * sinθ * -1 + g
 
-
-
-	pendulum.ax = (pendulum.wn - pendulum.β0 - pendulum.β1 -pendulum.β2) * pendulum.cosθ * pendulum.bPol
-	//var ay = 0
-	pendulum.ay = (pendulum.wn - pendulum.β0 - pendulum.β1 -pendulum.β2) * pendulum.sinθ * -1 + g
-
-	pendulum.vy = pendulum.vy+pendulum.ay
-	pendulum.vx = pendulum.vx+pendulum.ax
+	pendulum.vy = pendulum.vy+ay
+	pendulum.vx = pendulum.vx+ax
+	pendulum.r = r
+	//pendulum.Φdeg = Φrad * 180 / Math.PI
 }
 
 drawState = function(o){
@@ -143,7 +133,7 @@ reset = function () {
 	entities = []
 	mouse = {x:0, y:0, w:5, h: 5}
 	block = {x:0, y:0, w:10, h:10, vx:0, vy:0, length: 5}
-	person = { x:-50, y:50, w:5, h:5, vx:0, vy: 0}
+	person = { x:1, y:-200, w:5, h:5, vx:0, vy: 0}
 	drawable = [block,person,mouse]
 	gravityAffected = [person]
 	moveable = [person]
@@ -185,7 +175,7 @@ engine = function(){
 
 	
 	
-	grapplingHook(person,block)
+	grapplingHook(person,block,0.05)
 	gravityAffected.map(gravity)
 	mousetrackable.map(mouseUpdate)
 	moveable.map(move)
