@@ -41,3 +41,15 @@ Reinstate it again
 ```js
 E.components.StateDrawable = quickSave.StateDrawable
 ```
+
+Clone a particular entity
+
+```js
+var copy = E(
+  E(4)
+)
+
+//Give a new position so we can see it actually was created.
+E('Location',copy).x = _.random(-400,400)
+
+```
